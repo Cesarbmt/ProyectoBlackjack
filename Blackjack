@@ -1,0 +1,224 @@
+#include <iostream>
+#include <algorithm>
+#include <ctime>
+#include <cstdlib>
+
+
+using namespace std;
+
+const int numCartas = 52;
+
+// Definición de una carta
+struct Carta {
+    string palo;
+    string valor;
+    int puntaje;
+};
+
+// Definición de un jugador
+struct Jugador {
+    char nombre[100];
+    Carta mano[11]; 
+    int numCartas;
+    int puntos;
+    int partidasGanadas; 
+};
+
+// Función para inicializar el mazo de cartas
+void inicializarMazo(Carta mazo[]) {
+    string palos[] = {"Corazones", "Diamantes", "Espadas", "Treboles"};
+    string valores[] = {"2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"};
+    
+    int index = 0;
+    for (const string &palo : palos) {
+        for (const string &valor : valores) {
+            int puntaje = (valor == "A") ? 11 : (valor == "J" || valor == "Q" || valor == "K") ? 10 : stoi(valor);
+            mazo[index++] = {palo, valor, puntaje};
+        }
+    }
+}
+
+// Función para mezclar el mazo de cartas
+void mezclarMazo(Carta mazo[]) {
+    random_shuffle(mazo, mazo + numCartas);
+}
+
+// Función para repartir una carta del mazo
+Carta repartirCarta(Carta mazo[], int &index) {
+    return mazo[index++];
+}
+
+// Función para calcular el total de puntos de una mano
+int calcularPuntos(Carta mano[], int numCartas) {
+    int totalPuntos = 0;
+    int ases = 0;
+    for (int i = 0; i < numCartas; ++i) {
+        totalPuntos += mano[i].puntaje;
+        if (mano[i].valor == "A") {
+            ases++;
+        }
+    }
+    while (totalPuntos > 21 && ases > 0) {
+        totalPuntos -= 10;
+        ases--;
+    }
+    return totalPuntos;
+}
+
+int main() {
+    srand(time(0));
+    
+    Carta mazo[numCartas];
+    inicializarMazo(mazo);
+    mezclarMazo(mazo);
+    
+    Jugador jugador1, jugador2;
+    jugador1.partidasGanadas = 0; // Inicializar el número de partidas ganadas en 0
+    jugador2.partidasGanadas = 0; // Inicializar el número de partidas ganadas en 0
+    
+    cout << "" << endl;
+    cout << "*                            *" << endl;
+    cout << "*    Bienvenido al juego     *" << endl;
+    cout << "*           de               *" << endl;
+    cout << "*        Blackjack           *" << endl;
+    cout << "*                            *" << endl;
+    cout << "" << endl;
+
+    bool salir = false;
+    while (!salir) {
+        int index = 0;
+        cout << "-----------------------------" << endl;
+        cout << "|Menu:                      |" << endl;
+        cout << "|1. Jugar                   |" << endl;
+        cout << "|2. Puntajes                |" << endl;
+        cout << "|3. Creditos                |" << endl;
+        cout << "|4. Salir                   |" << endl;
+        cout << "|Ingrese la opcion deseada: |" << endl;
+        cout << "-----------------------------"   << endl;
+        int opcion;
+        cin >> opcion;
+
+        switch (opcion) {
+            case 1:
+                
+                cout << "Nombre del Jugador 1: ";
+                cin.ignore(); // Ignorar el salto de línea pendiente en el buffer
+                cin.getline(jugador1.nombre, sizeof(jugador1.nombre));
+                
+                cout << "Nombre del Jugador 2: ";
+                cin.getline(jugador2.nombre, sizeof(jugador2.nombre));
+                
+                // Restablecer datos de los jugadores
+                jugador1.numCartas = 0;
+                jugador2.numCartas = 0;
+                jugador1.puntos = 0;
+                jugador2.puntos = 0;
+
+                // Repartir cartas al Jugador 1
+                cout << "\nCartas de " << jugador1.nombre << ":" << endl;
+                jugador1.mano[jugador1.numCartas++] = repartirCarta(mazo, index);
+                jugador1.mano[jugador1.numCartas++] = repartirCarta(mazo, index);
+                for (int i = 0; i < jugador1.numCartas; ++i) {
+                    cout << jugador1.mano[i].valor << " de " << jugador1.mano[i].palo << endl;
+                }
+                cout << "*" << endl;
+                // Repartir cartas al Jugador 2
+                cout << "\nCartas de " << jugador2.nombre << ":" << endl;
+                jugador2.mano[jugador2.numCartas++] = repartirCarta(mazo, index);
+                jugador2.mano[jugador2.numCartas++] = repartirCarta(mazo, index);
+                for (int i = 0; i < jugador2.numCartas; ++i) {
+                    cout << jugador2.mano[i].valor << " de " << jugador2.mano[i].palo << endl;
+                }
+                
+                // Turno del Jugador 1
+                while (true) {
+                    cout << "\n" << jugador1.nombre << ", deseas tomar otra carta? (s/n): ";
+                    char opcion;
+                    cin >> opcion;
+                    if (opcion == 's') {
+                        jugador1.mano[jugador1.numCartas++] = repartirCarta(mazo, index);
+                        cout << "\nCartas de " << jugador1.nombre << ":" << endl;
+                        for (int i = 0; i < jugador1.numCartas; ++i) {
+                            cout << jugador1.mano[i].valor << " de " << jugador1.mano[i].palo << endl;
+                        }
+                        jugador1.puntos = calcularPuntos(jugador1.mano, jugador1.numCartas);
+                        if (jugador1.puntos > 21) {
+                            cout << "\n" << jugador1.nombre << " se ha pasado de 21. Ha perdido!" << endl;
+                            break; // Salir del bucle si el jugador se pasa de 21
+                        }
+                    } else if (opcion == 'n') {
+                        break;
+                    } else {
+                        cout << "\nOpcion no valida. Por favor, seleccione 's' para tomar otra carta o 'n' para detenerse.\n" << endl;
+                    }
+                }
+                    cout << "" << endl;
+                
+                // Turno del Jugador 2
+                while (true) {
+                    cout << "\n" << jugador2.nombre << ", deseas tomar otra carta? (s/n): ";
+                    char opcion;
+                    cin >> opcion;
+                    if (opcion == 's') {
+                        jugador2.mano[jugador2.numCartas++] = repartirCarta(mazo, index);
+                        cout << "\nCartas de " << jugador2.nombre << ":" << endl;
+                        for (int i = 0; i < jugador2.numCartas; ++i) {
+                            cout << jugador2.mano[i].valor << " de " << jugador2.mano[i].palo << endl;
+                        }
+                        jugador2.puntos = calcularPuntos(jugador2.mano, jugador2.numCartas);
+                        if (jugador2.puntos > 21) {
+                            cout << "\n" << jugador2.nombre << " se ha pasado de 21. Ha perdido!" << endl;
+                            break;
+                        }
+                    } else if (opcion == 'n') {
+                        break;
+                    } else {
+                        cout << "\nOpcion no valida. Por favor, seleccione 's' para tomar otra carta o 'n' para detenerse." << endl;
+                    }
+                }
+                
+                // Determinar el ganador
+                if (jugador1.puntos > 21 && jugador2.puntos > 21) {
+                    cout << "\nAmbos jugadores han perdido" << endl;
+                } else if (jugador1.puntos > 21) {
+                    cout << "\n" << jugador2.nombre << " ha ganado" << endl;
+                    jugador2.partidasGanadas++; // Aumentar el número de partidas ganadas para el jugador 2
+                } else if (jugador2.puntos > 21) {
+                    cout << "\n" << jugador1.nombre << " ha ganado" << endl;
+                    jugador1.partidasGanadas++; // Aumentar el número de partidas ganadas para el jugador 1
+                } else if (jugador1.puntos > jugador2.puntos) {
+                    cout << "\n" << jugador1.nombre << " ha ganado!" << endl;
+                    jugador1.partidasGanadas++; // Aumentar el número de partidas ganadas para el jugador 1
+                } else if (jugador2.puntos > jugador1.puntos) {
+                    cout << "\n" << jugador2.nombre << " ha ganado!" << endl;
+                    jugador2.partidasGanadas++; // Aumentar el número de partidas ganadas para el jugador 2
+                } else {
+                    cout << "\nHa habido un empate!" << endl;
+                }
+                break;
+                
+            case 2:
+                cout << "\nPuntajes:" << endl;
+                cout << "Puntos de " << jugador1.nombre << ": " << jugador1.puntos << endl;
+                cout << "Puntos de " << jugador2.nombre << ": " << jugador2.puntos << endl;
+                cout << "Partidas ganadas por " << jugador1.nombre << ": " << jugador1.partidasGanadas << endl;
+                cout << "Partidas ganadas por " << jugador2.nombre << ": " << jugador2.partidasGanadas << endl;
+                break;
+            case 3:
+                cout << "\nCreditos:" << endl;
+                cout << "Integrantes del grupo:" << endl;
+                cout << "- Marco Rios" << endl;
+                cout << "- Cesar Zapata" << endl;
+                break;
+            case 4:
+                salir = true;
+                cout << "\nGracias por jugar al Blackjack! Hasta luego." << endl;
+                break;
+            default:
+                cout << "\nOpcion no valida. Por favor, seleccione una opcion valida." << endl;
+                break;
+        }
+    }
+    
+    return 0;
+}
